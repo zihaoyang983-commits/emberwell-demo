@@ -1,0 +1,12 @@
+{
+  "name": "emberwell-demo",
+  "version": "0.2.0",
+  "description": "An original Canvas 2D metroidvania demo — 余烬之井",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "test": "node tests/game.test.cjs"
+  },
+  "engines": { "node": ">=18" }
+}

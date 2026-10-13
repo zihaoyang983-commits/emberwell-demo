@@ -10,7 +10,7 @@ test('relic unlock persists',`enterRoom(2);player.x=1030;player.y=254;interact()
 test('air dash cannot be repeated before landing',`player.onGround=false;player.airDash=false;player.dashCD=0;dash();let first=player.dashTime===.19;player.dashTime=0;player.dashCD=0;dash();first&&player.dashTime===0`);
 test('one hit per swing and soul gain',`enterRoom(1);let e=enemies[0];player.x=e.x-40;player.y=e.y;player.face=1;player.attackCD=0;player.dashTime=0;attack();update(.016);update(.016);e.hp===2&&player.soul>=12`);
 test('healing consumes earned resource',`enterRoom(0);player.hp=3;player.soul=50;player.attack=0;player.dashTime=0;keys.add('KeyC');for(let i=0;i<54;i++)update(1/60);keys.clear();player.hp===4&&player.soul===17`);
-test('checkpoint restores health and is saved',`player.x=260;player.onGround=true;player.hp=2;interact();player.hp===5&&saved.checkpoint===0`);
+test('checkpoint restores health and is saved',`player.x=260;player.onGround=true;player.hp=2;interact();for(let i=0;i<60;i++)update(1/60);player.hp===5&&saved.checkpoint===0`);
 test('damage invulnerability prevents repeated contact',`player.inv=0;player.hp=5;harm(1,0);harm(1,0);player.hp===4`);
 test('pit costs one life and returns to safe terrain',`player.hp=5;player.inv=0;player.y=800;update(.016);player.hp===4&&player.y===440&&player.x===260`);
 test('sealed route blocks without unlock',`saved.dash=false;enterRoom(3,'right');player.x=1140;update(.016);player.x>=1160`);

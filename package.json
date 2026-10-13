@@ -1,12 +1,12 @@
 {
   "name": "emberwell-demo",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Emberwell — a six-chapter Canvas metroidvania campaign",
   "private": true,
   "license": "MIT",
   "scripts": {
     "start": "node scripts/serve.cjs",
-    "test": "node tests/game.test.cjs && node tests/campaign.test.cjs"
+    "test": "node tests/game.test.cjs && node tests/campaign.test.cjs && node tests/combat.test.cjs"
   },
   "engines": {
     "node": ">=18"

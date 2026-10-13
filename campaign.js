@@ -8,7 +8,7 @@ const chapters=[
  {name:'深渊钟域',label:'THE SUNKEN BELFRY',color:'#292236',accent:'#baa5da',boss:'bell',bossName:'深渊钟守',hp:88,reward:'sigil',names:['钟域驿站','回声阶道','紫灯长桥','失音墓道','悬钟暗室','归音营火','残钟高台','回声试炼','钟守门庭','沉钟圣堂']},
  {name:'井心',label:'THE HEART BELOW',color:'#2a252b',accent:'#e0c296',boss:'heart',bossName:'无光之王',hp:120,reward:'ending',names:['井底灯台','封印阶道','旧王引桥','星烬长廊','无名石室','最后营火','追忆高台','王裔试炼','无光门庭','余烬之心']}
 ];
-const abilities={dash:['风之余烬','X / K 冲刺，地面与空中均可使用'],bolt:['余烬弹','F 向角色朝向发射单颗弹丸，空中也可用'],doubleJump:['枝羽之翼','空中再次按跳跃，可完成二段跳'],slam:['坠星之力','空中按 S / ↓ 下坠，击碎地面的破印屏障'],phaseDash:['镜行之力','使用冲刺穿越蓝色屏障']};
+const abilities={dash:['风之余烬','X / K 冲刺，地面与空中均可使用'],bolt:['余烬弹','F 向角色朝向发射单颗弹丸，空中也可用'],doubleJump:['枝羽之翼','空中再次按跳跃，可完成二段跳'],slam:['坠星之力','空中按 V 下坠，击碎地面的破印屏障'],phaseDash:['镜行之力','使用冲刺穿越蓝色屏障']};
 const engine={enter:enterRoom,interact,update,render,terrain,background,hud,drawBoss,updateBoss,start,map:mapOverlay};
 let campaignClock=0,saveClock=0,rewardCard=null,journalScroll=0,mapSelection=0,canTravel=false,hazards=[],arenaState=null;
 rooms.forEach((r,i)=>{r.chapter=0;r.mapX=[2,3,4,1,0][i];r.mapY=0;r.pickups=[];r.doors=[];});
@@ -86,10 +86,15 @@ enterRoom=function(id,side=null){
  engine.enter(id,side);r.boss=realBoss;saved.won=completedCampaign;
  if(completed){boss=null;r.lamp=150;}
  if(boss){boss.kind=r.bossId||'keeper';boss.name=r.bossName||'守门者';boss.hp=boss.max=r.bossHP||36;boss.turn=0;boss.targetX=0;boss.phaseTwo=false;}
- enemies.forEach((e,i)=>{e.hp=e.max=r.enemies[i]?.[3]||e.hp;e.fireTimer=1.5+i*.3;e.rushTimer=2+i*.4;e.rush=0;e.warn=0;e.rewarded=false;});
- hazards=[];player.airJumped=false;player.slam=false;arenaState=r.trial&&!saved.trials.includes(id)?{wave:0,timer:1.5,started:false}:null;
+ prepareCampaignEncounters(id);
  if(!saved.visited.includes(id))saved.visited.push(id);updateLabels();persist();return true;
 };
+function prepareCampaignEncounters(id){const r=rooms[id];
+ enemies.forEach((e,i)=>{e.hp=e.max=r.enemies[i]?.[3]||e.hp;e.fireTimer=1.5+i*.3;e.rushTimer=2+i*.4;e.rush=0;e.warn=0;e.rewarded=false;});
+ hazards=[];player.airJumped=false;player.slam=false;arenaState=r.trial&&!saved.trials.includes(id)?{wave:0,timer:1.5,started:false}:null;
+ if(r.bossId&&saved.bosses.includes(r.bossId))boss=null;
+}
+onRestComplete=function(){prepareCampaignEncounters(room);saveAt();toast('灯台已记录 · M 地图，可传送至已休憩的灯台。',4);};
 start=function(){engine.start();player.hp=maxHP();if(saved.ending)toast('长夜已过。仍可寻找记忆，或在灯台重访旧路。');else toast(chapterGoal(),6);};
 const originalRespawn=respawn;respawn=function(){saved.deaths++;originalRespawn();persist();};
 function activateSwitch(s){if(saved.switches.includes(s.id))return;saved.switches.push(s.id);spawn(s.x,s.y,35,rooms[room].accent,200);sound('rest');toast('灯印已唤醒 · '+chapterGoal(),4);updateLabels();persist();}
@@ -109,7 +114,7 @@ interact=function(){
  if(r.note&&Math.abs(player.x-r.note.x)<75){showCard('遗迹刻痕',r.note.text);return;}
  for(const s of r.switches||[])if(s.kind==='touch'&&Math.abs(player.x+13-s.x)<65&&Math.abs(player.y+23-s.y)<70){activateSwitch(s);return;}
  for(const d of r.doors||[])if(Math.abs(player.x-d.x)<75){if(!has(d.require)){toast('入口需要「'+abilities[d.require]?.[0]+'」。记下位置，获得能力后归来。',4);return;}const target=rooms[d.target],back=target.optional;enterRoom(d.target,back?'left':null);player.x=back?140:(target.doors?.find(a=>a.target===room)?.x||target.lamp||target.width-450);player.y=504;camera=Math.max(0,Math.min(target.width-W,player.x-500));return;}
- if(r.lamp&&Math.abs(player.x-r.lamp)<100&&player.onGround){if(boss&&boss.phase!=='sleep'){toast('战斗中无法在灯台休憩。');return;}engine.interact();saveAt();toast('灯台已记录 · M 地图，可传送至已休憩的灯台。',4);return;}
+ if(r.lamp&&Math.abs(player.x-r.lamp)<100&&player.onGround&&Math.abs(player.y+player.h-GROUND)<4){if(boss&&boss.phase!=='sleep'){toast('战斗中无法在灯台休憩。');return;}engine.interact();return;}
  engine.interact();
 };
 function spawnWave(){
@@ -123,7 +128,7 @@ function damageEnemy(e,n){if(e.hp<=0)return;e.hp-=n;e.hit=.2;spawn(e.x+17,e.y+16
 update=function(dt){
  if(mode!=='playing'){engine.update(dt);return;}saved.playSeconds+=dt;saveClock+=dt;
  const r=rooms[room],oldRoom=room,oldX=player.x,wasSlam=player.slam,foes=[...enemies];
- if(saved.slam&&(keys.has('KeyS')||keys.has('ArrowDown'))&&!player.onGround&&!player.slam&&player.dashTime<=0){player.slam=true;player.vy=1050;player.vx=0;spawn(player.x+13,player.y+20,12,'#e9c18e');}
+ if(saved.slam&&keys.has('KeyV')&&!player.onGround&&!player.slam&&player.attack<=0&&player.dashTime<=0){player.slam=true;player.vy=1050;player.vx=0;spawn(player.x+13,player.y+20,12,'#e9c18e');}
  engine.update(dt);if(mode!=='playing'||player.dead>0)return;if(room!==oldRoom)return;
  if(player.slam&&player.onGround){player.slam=false;shake=12;spawn(player.x+13,GROUND,40,'#e8c28a',230);for(const e of enemies)if(Math.abs(e.x-player.x)<150)damageEnemy(e,4+saved.blade);for(const b of r.barriers||[])if(b.kind==='break'&&Math.abs(player.x-b.x)<150&&!saved.broken.includes(b.id)){saved.broken.push(b.id);toast('破印已碎 · 新的路径已开启。');persist();}}
  for(const e of foes)if(e.hp<=0&&!e.rewarded){e.rewarded=true;saved.kills++;saved.coins+=12+r.chapter*4;spawn(e.x+17,e.y+16,10,'#dfc281');}

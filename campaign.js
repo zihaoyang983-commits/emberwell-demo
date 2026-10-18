@@ -4,9 +4,9 @@ const chapters=[
  {name:'沉睡遗迹',label:'THE SLEEPING RUINS',color:'#122b30',accent:'#a6bca0'},
  {name:'荆棘林',label:'THE THORNWOOD',color:'#16342c',accent:'#9dc484',boss:'thorn',bossName:'荆冠寄主',hp:60,reward:'doubleJump',names:['林缘驿站','根脉长廊','种灯小径','断枝水道','缠根石室','旅人营火','古树冠廊','孢子试炼','荆冠门庭','寄主之巢']},
  {name:'熔炉遗城',label:'THE ASHEN FORGE',color:'#36261f',accent:'#dda16c',boss:'forge',bossName:'熔炉司祭',hp:72,reward:'slam',names:['锻火驿站','炉渣甬道','熔铜引桥','灰雨工坊','齿轮密室','余温营火','祭火高台','铸兵试炼','司祭门庭','旧日熔炉']},
- {name:'镜湖',label:'THE MIRROR MERE',color:'#192d40',accent:'#a5d2e9',boss:'mirror',bossName:'镜湖残像',hp:80,reward:'phaseDash',names:['湖畔书斋','倒影步道','碎镜廊桥','寂静渡口','银波石室','蓝灯营火','潮汐钟楼','残像试炼','镜月门庭','无声镜殿']},
- {name:'深渊钟域',label:'THE SUNKEN BELFRY',color:'#292236',accent:'#baa5da',boss:'bell',bossName:'深渊钟守',hp:88,reward:'sigil',names:['钟域驿站','回声阶道','紫灯长桥','失音墓道','悬钟暗室','归音营火','残钟高台','回声试炼','钟守门庭','沉钟圣堂']},
- {name:'井心',label:'THE HEART BELOW',color:'#2a252b',accent:'#e0c296',boss:'heart',bossName:'无光之王',hp:120,reward:'ending',names:['井底灯台','封印阶道','旧王引桥','星烬长廊','无名石室','最后营火','追忆高台','王裔试炼','无光门庭','余烬之心']}
+ {name:'镜湖',label:'THE MIRROR MERE',color:'#192d40',accent:'#a5d2e9',boss:'mirror',bossName:'镜湖残像',hp:144,reward:'phaseDash',names:['湖畔书斋','倒影步道','碎镜廊桥','寂静渡口','银波石室','蓝灯营火','潮汐钟楼','残像试炼','镜月门庭','无声镜殿']},
+ {name:'深渊钟域',label:'THE SUNKEN BELFRY',color:'#292236',accent:'#baa5da',boss:'bell',bossName:'深渊钟守',hp:288,reward:'sigil',names:['钟域驿站','回声阶道','紫灯长桥','失音墓道','悬钟暗室','归音营火','残钟高台','回声试炼','钟守门庭','沉钟圣堂']},
+ {name:'井心',label:'THE HEART BELOW',color:'#2a252b',accent:'#e0c296',boss:'heart',bossName:'无光之王',hp:576,reward:'ending',names:['井底灯台','封印阶道','旧王引桥','星烬长廊','无名石室','最后营火','追忆高台','王裔试炼','无光门庭','余烬之心']}
 ];
 const abilities={dash:['风之余烬','X / K 冲刺，地面与空中均可使用'],bolt:['余烬弹','F 向角色朝向发射单颗弹丸，空中也可用'],doubleJump:['枝羽之翼','空中再次按跳跃，可完成二段跳'],slam:['坠星之力','空中按 V 下坠，击碎地面的破印屏障'],phaseDash:['镜行之力','使用冲刺穿越蓝色屏障']};
 const engine={enter:enterRoom,interact,update,render,terrain,background,hud,drawBoss,updateBoss,start,map:mapOverlay};
@@ -57,7 +57,8 @@ for(let n=0;n<8;n++){
  const r={name:sideNames[n],label:'A MEMORY LEFT BEHIND',width:2800,color:z.color,accent:z.accent,chapter:ch,left:parent,right:null,ground:[[0,700],[920,800],[1940,860]],platforms:[[735,425,150],[1775,390,150],[2300,350,220]],enemies:[['spitter',1400,550,5],['flyer',1100,320,4],['rusher',2470,550,6]],pickups:[{id:'memory-'+n,x:2420,y:325,type:'memory'},{id:'side-coins-'+n,x:1300,y:510,type:'coins',value:80}],doors:[{x:130,target:parent,name:'返回主路'}],mapX:rooms[parent].mapX,mapY:ch+.48,optional:true};
  rooms.push(r);rooms[parent].doors.push({x:rooms[parent].width-440,target:id,require:n===1?'doubleJump':n===3?'slam':n===5?'phaseDash':null,name:r.name});
 }
-function freshProgress(){return {version:3,bosses:[],switches:[],broken:[],collected:[],fragments:[],memories:[],visited:[0],lamps:[0],trials:[],quests:[],blade:0,coins:0,playSeconds:0,deaths:0,kills:0,doubleJump:false,slam:false,phaseDash:false,ending:null};}
+function drawArtNPC(n,r){ellipse(n.x,498,12,15,r.accent);text(n.name,n.x,468,11,r.accent,"center");}
+function freshProgress(){return {version:3,supplies:0,ward:0,bosses:[],switches:[],broken:[],collected:[],fragments:[],memories:[],visited:[0],lamps:[0],trials:[],quests:[],blade:0,coins:0,playSeconds:0,deaths:0,kills:0,doubleJump:false,slam:false,phaseDash:false,ending:null};}
 const wasOldWin=saved.version!==3&&saved.won;
 saved={...freshProgress(),...saved};
 for(const field of ['bosses','switches','broken','collected','fragments','memories','visited','lamps','trials','quests'])if(!Array.isArray(saved[field]))saved[field]=[];
@@ -132,12 +133,12 @@ update=function(dt){
  engine.update(dt);if(mode!=='playing'||player.dead>0)return;if(room!==oldRoom)return;
  if(player.slam&&player.onGround){player.slam=false;shake=12;spawn(player.x+13,GROUND,40,'#e8c28a',230);for(const e of enemies)if(Math.abs(e.x-player.x)<150)damageEnemy(e,4+saved.blade);for(const b of r.barriers||[])if(b.kind==='break'&&Math.abs(player.x-b.x)<150&&!saved.broken.includes(b.id)){saved.broken.push(b.id);toast('破印已碎 · 新的路径已开启。');persist();}}
  for(const e of foes)if(e.hp<=0&&!e.rewarded){e.rewarded=true;saved.kills++;saved.coins+=12+r.chapter*4;spawn(e.x+17,e.y+16,10,'#dfc281');}
- for(const e of enemies){if(e.hp<=0)continue;
+ for(const e of enemies){if(e.hp<=0||e.species)continue;
   if(e.type==='spitter'&&Math.abs(e.x-player.x)<800){e.fireTimer-=dt;e.warn=e.fireTimer<.55?.55-e.fireTimer:0;if(e.fireTimer<=0){const a=Math.atan2(player.y+23-(e.y+12),player.x+13-(e.x+17));shots.push({x:e.x+17,y:e.y+12,vx:Math.cos(a)*225,vy:Math.sin(a)*225,life:4,owner:'enemy'});e.fireTimer=2.8;}}
   if(e.type==='rusher'){e.rushTimer-=dt;if(e.rushTimer<.6&&e.rushTimer>0){e.warn=.6-e.rushTimer;e.dir=player.x>e.x?1:-1;}if(e.rushTimer<=0){e.rush=.5;e.rushTimer=3.2;e.warn=0;}if(e.rush>0){const nx=e.x+e.dir*350*dt;if(r.ground.some(g=>nx+17>g[0]+10&&nx+17<g[0]+g[1]-10))e.x=nx;e.rush-=dt;}}
  }
  for(const s of r.switches||[]){if(saved.switches.includes(s.id))continue;if(s.kind==='plate'&&player.onGround&&Math.abs(player.x+13-s.x)<45)activateSwitch(s);if(s.kind==='shot')for(const shot of shots)if(shot.owner==='player'&&Math.abs(shot.x-s.x)<36&&Math.abs(shot.y-s.y)<35){shot.life=0;activateSwitch(s);}}
- for(const b of r.barriers||[]){const open=b.kind==='seal'?b.need.every(id=>saved.switches.includes(id)):b.kind==='break'?saved.broken.includes(b.id):saved.phaseDash&&player.dashTime>0;if(open)continue;const gx=b.x;
+ for(const b of r.barriers||[]){if(developerFlying())continue;const open=b.kind==='seal'?b.need.every(id=>saved.switches.includes(id)):b.kind==='break'?saved.broken.includes(b.id):saved.phaseDash&&player.dashTime>0;if(open)continue;const gx=b.x;
   if((oldX>=gx&&player.x<gx+32)||(oldX+player.w<=gx+32&&player.x+player.w>gx)){player.x=oldX>=gx?gx+35:gx-player.w-2;player.vx=0;}
  }
  for(const p of r.pickups||[]){if(saved.collected.includes(p.id))continue;if(Math.abs(player.x+13-p.x)<35&&Math.abs(player.y+23-p.y)<42){saved.collected.push(p.id);if(p.type==='coins'){saved.coins+=p.value;toast('拾得 '+p.value+' 光屑',2);}if(p.type==='fragment'){saved.fragments.push(p.id);player.hp=Math.min(maxHP(),player.hp+1);toast('获得心灯碎片 · 每三枚增加一格生命上限。',4);}if(p.type==='memory'){saved.memories.push(p.id);showCard('找回一份旧日记忆',`失落记忆 ${saved.memories.length}/8\n「灯曾经为每一位归来的旅人亮着。」\n带回给林缘巡林者或镜湖学者。`);}spawn(p.x,p.y,30,r.accent,190);persist();}}
@@ -168,24 +169,25 @@ win=function(){
  if(!saved.bosses.includes(id)){saved.bosses.push(id);saved.coins+=100+r.chapter*30;}r.lamp=150;saveAt(room);
  if(id==='keeper')grantAbility('bolt');else if(r.bossReward==='ending'){showCard('余烬之井的命运','四枚灯芯已归来。\n你可以封住井口，让长夜沉眠。\n若已向学者交还四份记忆，也可以唤醒黎明。','endingChoice');}
  else if(abilities[r.bossReward])grantAbility(r.bossReward);else showCard('获得第四枚灯芯','沉钟已止。返回灯台，向井心前行。');
- persist();updateLabels();sound('rest');
+ onBossReward(id);persist();updateLabels();sound('rest');
 };
 function finishEnding(kind){if(kind==='dawn'&&!saved.quests.includes('truth'))return;saved.ending=kind;saved.won=true;persist();showCard(kind==='dawn'?'结局 · 井下黎明':'结局 · 长夜归眠',kind==='dawn'?'你将记忆放回井心。黑暗记起了自己的名字。\n每一盏灯都为归来的旅人亮起。':'你将灯芯留在井底，封住了长夜。\n地面重新迎来星光，井下的故事仍在等待被记起。','epilogue');updateLabels();}
 function forgeBlade(){const cost=saved.blade===0?90:220;if(saved.blade>=2)return;if(saved.coins<cost){showCard('光屑不足',`重铸需要 ${cost} 光屑，你拥有 ${saved.coins}。\n探索遗迹与击败敌人可以获取光屑。`);return;}saved.coins-=cost;saved.blade++;persist();showCard('旅人刃已重铸',`刃等级 ${saved.blade+1}/3\n近战伤害 ${meleeDamage()} · 余烬弹伤害 ${2+saved.blade}`);}
 mapOverlay=function(){
- ctx.fillStyle='#08131bef';ctx.fillRect(0,0,W,H);text('余烬之井 · 遗迹全图',W/2,60,25,'#dcdcc6','center','serif');text('灰色：未知 · 金色：当前位置 · ✧：灯台 · ◇：Boss · 小方格：支路',W/2,86,11,'#9cad9b','center');
+ ctx.fillStyle='#08131bef';ctx.fillRect(0,0,W,H);text('余烬之井 · 遗迹全图',W/2,60,25,'#dcdcc6','center','serif');text('灰色：未知 · 金色：当前位置 · ✧：灯台 · ◇：Boss · 小方格：支路 · 最右列：秘境 / 新支路',W/2,86,11,'#9cad9b','center');
  for(let ch=0;ch<=5;ch++)text(chapters[ch].name,42,132+ch*65,10,chapters[ch].accent,'left');
- for(let i=0;i<rooms.length;i++){const r=rooms[i],x=155+r.mapX*98,y=120+r.mapY*65,w=r.optional?56:90,h=r.optional?19:26;const seen=saved.visited.includes(i);
+ for(let i=0;i<rooms.length;i++){const r=rooms[i],x=155+r.mapX*98,y=120+r.mapY*65,w=r.optional?56:90,h=r.optional?19:26;const seen=isRoomMapped(i);
   if(r.left!==null&&rooms[r.left]?.chapter===r.chapter){const next=rooms[r.left];line(x+w/2,y+h/2,155+next.mapX*98+45,120+next.mapY*65+13,'#45605566');}
   ctx.fillStyle=i===room?'#746447':seen?'#2c453d':'#12252c';ctx.fillRect(x,y,w,h);ctx.strokeStyle=i===mapSelection?'#eddbab':seen?r.accent+'80':'#314543';ctx.lineWidth=i===mapSelection?2:1;ctx.strokeRect(x,y,w,h);
   text(seen?r.name:'· · ·',x+w/2,y+h*.7,r.optional?7:9,seen?'#d1d8bf':'#567268','center');if(saved.lamps.includes(i))text('✧',x+6,y-3,11,'#d6bd83');if(r.bossId)text(saved.bosses.includes(r.bossId)?'✓':'◇',x+w-9,y-3,10,r.accent);
  }
- const selected=rooms[mapSelection];text((saved.visited.includes(mapSelection)?selected.name:'未知遗迹')+' · '+chapters[selected.chapter].name,W/2,515,16,'#d2d4ba','center');text(canTravel&&saved.lamps.includes(mapSelection)?'E / 下方传送按钮：前往所选灯台':'点击选择房间 · 在灯台旁打开地图可传送',W/2,541,12,'#b9c8b2','center');text('M / ESC 返回 · TAB / Q 旅人札记',W/2,569,11,'#8ea498','center');
+ const selected=rooms[mapSelection];text((isRoomMapped(mapSelection)?selected.name:'未知遗迹')+' · '+chapters[selected.chapter].name,W/2,515,16,'#d2d4ba','center');text(canTravel&&saved.lamps.includes(mapSelection)?'E / 下方传送按钮：前往所选灯台':'点击选择房间 · 在灯台旁打开地图可传送',W/2,541,12,'#b9c8b2','center');text('M / ESC 返回 · TAB / Q 旅人札记',W/2,569,11,'#8ea498','center');
 };
 const originalToggleMap=toggleMap;toggleMap=function(){if(mode==='playing'){canTravel=player.onGround&&!!rooms[room].lamp&&Math.abs(player.x-rooms[room].lamp)<100&&!boss;mapSelection=room;toastTimer=0;document.getElementById('toast').style.opacity='0';}originalToggleMap();};
 function travelToSelection(){if(!canTravel||!saved.lamps.includes(mapSelection)){toast('传送需要站在灯台旁，并选择已休憩的灯台。');return;}mode='playing';enterRoom(mapSelection);player.hp=maxHP();saveAt(mapSelection);toast('灯光将你带回 '+rooms[mapSelection].name);}
 canvas.addEventListener('pointerdown',e=>{if(mode!=='map')return;const b=canvas.getBoundingClientRect(),x=(e.clientX-b.left)*W/b.width,y=(e.clientY-b.top)*H/b.height;const i=rooms.findIndex(r=>x>=155+r.mapX*98&&x<155+r.mapX*98+(r.optional?56:90)&&y>=120+r.mapY*65&&y<120+r.mapY*65+(r.optional?19:26));if(i>=0){mapSelection=i;}});
 window.addEventListener('keydown',e=>{
+ e=resolveGameKey(e);
  if(e.repeat&&['Tab','KeyQ','Enter','Digit1','Digit2'].includes(e.code)){if(e.code==='Tab')e.preventDefault();return;}
  if(e.code==='Tab'||e.code==='KeyQ'){e.preventDefault();if(mode==='playing'){mode='journal';keys.clear();}else if(mode==='journal')mode='playing';}
  if(e.code==='Escape'&&mode==='journal')mode='playing';
@@ -200,7 +202,7 @@ terrain=function(){engine.terrain();const r=rooms[room];
  for(const s of r.switches||[]){const active=saved.switches.includes(s.id);glow(s.x,s.y,60,active?r.accent+'55':'#78686a25');ellipse(s.x,s.y,16,16,active?r.accent:'#4c5961');ellipse(s.x,s.y,7,7,active?'#f7ebbe':'#182832');text(active?'✓':s.kind==='shot'?'F':s.kind==='plate'?'▼':'E',s.x,s.y+5,13,active?'#fff0c4':'#cad2bf','center');if(Math.abs(player.x-s.x)<110&&!active)interactionPrompt(s.kind==='shot'?'余烬弹击中灯印':s.kind==='plate'?'踏上石盘':'E 唤醒高台灯印',s.x,s.y-35);}
  for(const b of r.barriers||[]){const open=b.kind==='seal'?b.need.every(id=>saved.switches.includes(id)):b.kind==='break'?saved.broken.includes(b.id):false;if(open)continue;const color=b.kind==='phase'?'#9adbef':b.kind==='break'?'#d7b080':'#c2a3cf';for(let y=170;y<550;y+=40){line(b.x,y,b.x+28,y+28,color+'99',3);line(b.x+28,y,b.x,y+28,color+'77',2);}glow(b.x+14,365,150,color+'18');text(b.kind==='phase'?'冲刺穿镜':b.kind==='break'?'下坠破印':`灯印 ${b.need.filter(id=>saved.switches.includes(id)).length}/3`,b.x+14,135,12,color,'center');}
  for(const d of r.doors||[]){arch(d.x-28,440,56,110,r.accent+'80',4);glow(d.x,492,54,r.accent+'19');text('↥',d.x,480,20,r.accent,'center');if(Math.abs(player.x-d.x)<90)interactionPrompt('E '+d.name,d.x,419);}
- if(r.npc){const n=r.npc;ellipse(n.x,543,22,5,'#0007');path([[n.x-14,515],[n.x-23,541],[n.x+24,541],[n.x+10,508]],r.accent+'88');ellipse(n.x,498,12,15,'#c7cbb8');ellipse(n.x-4,496,2,3,'#24353a');ellipse(n.x+4,496,2,3,'#24353a');text(n.name,n.x,468,11,r.accent,'center');if(Math.abs(player.x-n.x)<90)interactionPrompt('E 交谈',n.x,438);}
+ if(r.npc)drawArtNPC(r.npc,r);
  if(r.note){path([[r.note.x-20,550],[r.note.x-20,503],[r.note.x+20,503],[r.note.x+20,550]],'#5d7065');text('✧',r.note.x,529,15,'#bec7ac','center');if(Math.abs(player.x-r.note.x)<80)interactionPrompt('E 阅读刻痕',r.note.x,476);}
  for(const x of r.hazardPoints||[]){const t=(time+x*.001)%4.5;if(t>1.5&&t<2.4){line(x-25,GROUND,x+25,GROUND,'#e6b283',3);text('!',x,510,19,'#e6b283','center');}if(t>2.4&&t<3.7){glow(x,510,80,r.accent+'66');path([[x-27,550],[x-15,465],[x,440],[x+20,480],[x+27,550]],r.accent+'a0');}}
  for(const h of hazards){ctx.fillStyle='#d8bbf2aa';ctx.fillRect(h.x,h.y,h.w,h.h);line(h.x,h.y+h.h/2,h.x+h.w,h.y+h.h/2,'#fff3e4',4);}
@@ -236,7 +238,7 @@ document.getElementById('campaign-travel')?.addEventListener('click',travelToSel
 document.getElementById('ending-seal')?.addEventListener('click',()=>finishEnding('seal'));
 document.getElementById('ending-dawn')?.addEventListener('click',()=>finishEnding('dawn'));
 document.getElementById('journal-button')?.addEventListener('click',()=>{if(mode==='playing'){mode='journal';keys.clear();}else if(mode==='journal')mode='playing';});
-document.getElementById('new-game')?.addEventListener('click',()=>{if(window.confirm('开始新的旅途？这会重置当前浏览器中的游戏进度。')){saved={dash:false,bolt:false,won:false,checkpoint:0,...freshProgress()};persist();location.reload();}});
+// New-game and save-slot actions are owned by menu.js.
 if(saved.visited.length>1||saved.dash)document.getElementById('start').innerHTML='继续旅途 <span>↗</span>';
 document.getElementById('start').onclick=start;
 document.getElementById('map-button').onclick=toggleMap;

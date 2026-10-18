@@ -1,14 +1,20 @@
 {
   "name": "emberwell-demo",
-  "version": "0.3.1",
-  "description": "Emberwell — a six-chapter Canvas metroidvania campaign",
+  "version": "0.19.0",
+  "description": "Emberwell — an original six-chapter Canvas metroidvania demo with 81 rooms",
   "private": true,
   "license": "MIT",
   "scripts": {
     "start": "node scripts/serve.cjs",
-    "test": "node tests/game.test.cjs && node tests/campaign.test.cjs && node tests/combat.test.cjs"
+    "build": "node scripts/build.cjs",
+    "test": "node scripts/test.cjs"
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zihaoyang983-commits/emberwell-demo.git"
+  },
+  "homepage": "https://emberwell-demo.validcarp16.chatgpt.site/"
 }

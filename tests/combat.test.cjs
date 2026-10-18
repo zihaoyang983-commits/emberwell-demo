@@ -4,7 +4,7 @@ function make(){
  const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}}),createRadialGradient:()=>({addColorStop(){}}),measureText:t=>({width:t.length*9})},{get:(o,k)=>o[k]||(()=>{}),set:(o,k,v)=>(o[k]=v,true)});
  function el(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',style:{},hidden:false,classList:{add(){}},addEventListener(){},focus(){},getBoundingClientRect:()=>({left:0,top:0,width:1200,height:650}),getContext:()=>ctx});return elements.get(id);}
  const sandbox={document:{getElementById:el,addEventListener(){},querySelectorAll:()=>[]},window:{addEventListener(k,f){(events[k]||=[]).push(f)},confirm:()=>false},localStorage:{getItem:k=>storage[k],setItem:(k,v)=>storage[k]=v},requestAnimationFrame(){},console,Math,location:{reload(){}},key(code,type='keydown'){for(const f of events[type]||[])f({code,repeat:false,preventDefault(){}})}};
- vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').resolve(__dirname,'../game.js'),'utf8'),sandbox);vm.runInContext(fs.readFileSync(require('node:path').resolve(__dirname,'../campaign.js'),'utf8'),sandbox);
+ vm.createContext(sandbox);vm.runInContext(fs.readFileSync('game.js','utf8'),sandbox);vm.runInContext(fs.readFileSync('campaign.js','utf8'),sandbox);vm.runInContext(fs.readFileSync('variety.js','utf8'),sandbox);
  vm.runInContext("start();enterRoom(0);player.inv=0;enemies=[];keys.clear();",sandbox);return sandbox;
 }
 let count=0;function test(name,code){try{assert.equal(vm.runInContext(`(()=>{${code}})()`,make()),true);count++;console.log('PASS',name);}catch(e){console.error('FAIL',name,e);process.exitCode=1;}}
